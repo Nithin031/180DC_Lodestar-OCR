@@ -1,0 +1,106 @@
+{
+  "kind": "marksheet",
+  "title": "ADCA Advance Diploma in Computer Application Marksheet",
+  "exam_type": "diploma",
+  "academicRecord": {
+    "gradingMode": "percentage",
+    "percentage": 69.83,
+    "sgpa": null,
+    "cgpa": null,
+    "subjects": [
+      {
+        "subject": "COMPUTER FUNDAMENTAL",
+        "score": "45",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "WINDOWS",
+        "score": "66",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "MS WORD",
+        "score": "70",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "MS EXCEL",
+        "score": "75",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "MS POWER POINT",
+        "score": "80",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "MS ACCESS",
+        "score": "55",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "PAGEMAKER",
+        "score": "46",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "PHOTOSHOP",
+        "score": "78",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "COREL DRAW",
+        "score": "88",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "TALLY",
+        "score": "90",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "COMMAND PROMPT (MS-DOS)",
+        "score": "67",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      },
+      {
+        "subject": "INTERNET",
+        "score": "78",
+        "maxScore": "100",
+        "grade": null,
+        "confidence": 1.0
+      }
+    ]
+  },
+  "tags": [
+    "ADCA",
+    "Diploma",
+    "Computer Application",
+    "2024"
+  ],
+  "needs_review": false,
+  "processing_ms": 30983,
+  "cached": false
+}

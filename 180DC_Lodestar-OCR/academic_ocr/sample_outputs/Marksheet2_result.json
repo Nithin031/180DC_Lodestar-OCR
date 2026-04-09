@@ -1,0 +1,85 @@
+{
+  "kind": "marksheet",
+  "title": "ALL INDIA SENIOR SCHOOL CERTIFICATE EXAMINATION",
+  "exam_type": "final",
+  "academicRecord": {
+    "gradingMode": "grade",
+    "percentage": null,
+    "sgpa": null,
+    "cgpa": null,
+    "subjects": [
+      {
+        "subject": "ENGLISH CORE",
+        "score": null,
+        "maxScore": null,
+        "grade": "A2",
+        "gradingType": "grade_only",
+        "confidence": 0.9
+      },
+      {
+        "subject": "MATHEMATICS",
+        "score": null,
+        "maxScore": null,
+        "grade": "C1",
+        "gradingType": "grade_only",
+        "confidence": 0.9
+      },
+      {
+        "subject": "PHYSICS",
+        "score": "48",
+        "maxScore": "100",
+        "grade": "B1",
+        "gradingType": "marks",
+        "confidence": 0.9
+      },
+      {
+        "subject": "CHEMISTRY",
+        "score": "39",
+        "maxScore": "100",
+        "grade": "B2",
+        "gradingType": "marks",
+        "confidence": 0.9
+      },
+      {
+        "subject": "BIOLOGY",
+        "score": "55",
+        "maxScore": "100",
+        "grade": "A1",
+        "gradingType": "marks",
+        "confidence": 0.9
+      },
+      {
+        "subject": "WORK EXPERIENCE",
+        "score": null,
+        "maxScore": null,
+        "grade": "B1",
+        "gradingType": "grade_only",
+        "confidence": 0.9
+      },
+      {
+        "subject": "PHYSICAL & HEALTH EDUCATION",
+        "score": null,
+        "maxScore": null,
+        "grade": "B1",
+        "gradingType": "grade_only",
+        "confidence": 0.9
+      },
+      {
+        "subject": "GENERAL STUDIES",
+        "score": null,
+        "maxScore": null,
+        "grade": "C2",
+        "gradingType": "grade_only",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "tags": [
+    "CBSE",
+    "Class 12",
+    "1996"
+  ],
+  "needs_review": true,
+  "processing_ms": 7984,
+  "cached": false
+}
