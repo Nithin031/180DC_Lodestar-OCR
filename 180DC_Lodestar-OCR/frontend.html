@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic OCR — Extraction Tester</title>
+  <meta name="description" content="Test interface for the Academic OCR extraction API — upload marksheets or certificates and view structured results." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Root ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #0b0d11;
+      --bg-secondary:  #12151c;
+      --bg-card:       #171b24;
+      --bg-elevated:   #1e2330;
+      --border:        #2a3044;
+      --border-hover:  #3d4663;
+      --text-primary:  #e8ecf4;
+      --text-secondary:#8b95ad;
+      --text-muted:    #5c6580;
+      --accent:        #6c8cff;
+      --accent-hover:  #8ba4ff;
+      --accent-glow:   rgba(108, 140, 255, .18);
+      --green:         #34d399;
+      --green-bg:      rgba(52, 211, 153, .12);
+      --amber:         #fbbf24;
+      --amber-bg:      rgba(251, 191, 36, .12);
+      --red:           #f87171;
+      --red-bg:        rgba(248, 113, 113, .10);
+      --purple:        #a78bfa;
+      --purple-bg:     rgba(167, 139, 250, .12);
+      --radius:        12px;
+      --radius-sm:     8px;
+      --radius-lg:     16px;
+      --transition:    .22s cubic-bezier(.4,0,.2,1);
+      --font-sans:     'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono:     'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient Background Glow ──────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -40%; left: -20%;
+      width: 140%; height: 140%;
+      background:
+        radial-gradient(ellipse 600px 400px at 20% 20%, rgba(108,140,255,.06), transparent),
+        radial-gradient(ellipse 500px 500px at 80% 80%, rgba(167,139,250,.05), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 760px;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    header .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: var(--radius-sm);
+      display: grid; place-items: center;
+      font-size: 20px;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    header h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: .92rem;
+      margin-top: 6px;
+    }
+
+    /* ── Card ──────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 24px;
+      transition: border-color var(--transition);
+    }
+    .card:hover { border-color: var(--border-hover); }
+
+    .card-title {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Drop Zone ────────────────────────────────────────────────── */
+    .dropzone {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        border-color var(--transition),
+        background var(--transition),
+        box-shadow var(--transition);
+    }
+
+    .dropzone:hover,
+    .dropzone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dropzone-icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      filter: grayscale(.4);
+      transition: filter var(--transition);
+    }
+    .dropzone:hover .dropzone-icon,
+    .dropzone.drag-over .dropzone-icon { filter: none; }
+
+    .dropzone-text {
+      color: var(--text-secondary);
+      font-size: .92rem;
+      line-height: 1.6;
+    }
+    .dropzone-text strong { color: var(--accent); font-weight: 600; }
+    .dropzone-hint {
+      display: block;
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── File Info Bar ────────────────────────────────────────────── */
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .file-info.visible { display: flex; }
+
+    .file-info-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+    .file-info-details { flex: 1; min-width: 0; }
+    .file-info-name {
+      font-size: .88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-info-size {
+      font-size: .76rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .file-info-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color var(--transition), background var(--transition);
+    }
+    .file-info-remove:hover {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+
+    /* ── Preview ───────────────────────────────────────────────────── */
+    .preview-wrapper {
+      display: none;
+      margin-top: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      max-height: 320px;
+      position: relative;
+    }
+    .preview-wrapper.visible { display: block; }
+    .preview-wrapper img {
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+      object-fit: contain;
+      background: var(--bg-primary);
+      display: block;
+    }
+    .preview-pdf-badge {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 48px 24px;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-size: .88rem;
+    }
+    .preview-pdf-badge .pdf-icon {
+      font-size: 3rem;
+    }
+
+    /* ── Extract Button ───────────────────────────────────────────── */
+    .btn-extract {
+      width: 100%;
+      padding: 16px;
+      margin-top: 20px;
+      font-family: var(--font-sans);
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #5471e8);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition:
+        opacity var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+      box-shadow: 0 4px 20px rgba(108,140,255,.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-extract:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(108,140,255,.35);
+    }
+    .btn-extract:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-extract:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-extract .btn-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* ── Spinner ───────────────────────────────────────────────────── */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-extract.loading .spinner { display: block; }
+    .btn-extract.loading .btn-label { display: none; }
+    .btn-extract.loading .btn-loading-label { display: inline; }
+    .btn-loading-label { display: none; }
+
+    /* ── Result Section ───────────────────────────────────────────── */
+    #result-section {
+      display: none;
+      animation: fadeUp .35s ease-out;
+    }
+    #result-section.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Badge ─────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: .76rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .badge-marksheet {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(52, 211, 153, .2);
+    }
+    .badge-certificate {
+      background: var(--purple-bg);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, .2);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    /* ── Structured Data ──────────────────────────────────────────── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 540px) {
+      .data-grid { grid-template-columns: 1fr; }
+    }
+
+    .data-cell {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .data-cell-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .data-cell-value {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ── Subjects Table ───────────────────────────────────────────── */
+    .subjects-section { margin-bottom: 20px; }
+    .subjects-section h3 {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .subjects-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    .subjects-table th {
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .subjects-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(42,48,68,.5);
+      color: var(--text-primary);
+    }
+    .subjects-table tr:last-child td { border-bottom: none; }
+    .subjects-table tr:hover td { background: var(--bg-elevated); }
+
+    /* ── Tags ──────────────────────────────────────────────────────── */
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+    }
+    .tag {
+      padding: 4px 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: .74rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ── Raw JSON Toggle ──────────────────────────────────────────── */
+    .raw-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: .78rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 20px;
+    }
+    .raw-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    .raw-json {
+      display: none;
+      margin-top: 12px;
+      padding: 20px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      line-height: 1.55;
+    }
+    .raw-json.visible { display: block; }
+    .raw-json pre {
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Syntax Highlighting ──────────────────────────────────────── */
+    .json-key    { color: var(--accent); }
+    .json-string { color: var(--green); }
+    .json-number { color: var(--amber); }
+    .json-bool   { color: var(--purple); }
+    .json-null   { color: var(--text-muted); }
+
+    /* ── Error Messages ───────────────────────────────────────────── */
+    .error-banner {
+      display: none;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--red-bg);
+      border: 1px solid rgba(248,113,113,.2);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      animation: fadeUp .3s ease-out;
+    }
+    .error-banner.visible { display: flex; }
+    .error-banner-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+    .error-banner-body { flex: 1; }
+    .error-banner-title {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+    .error-banner-msg {
+      font-size: .84rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .error-banner-code {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      background: rgba(248,113,113,.08);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: .76rem;
+      color: var(--red);
+    }
+    .error-banner-dismiss {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px;
+      border-radius: 4px;
+    }
+    .error-banner-dismiss:hover { color: var(--red); }
+
+    /* ── Elapsed Timer ────────────────────────────────────────────── */
+    .elapsed {
+      font-size: .76rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .76rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Pulse animation for loading card ─────────────────────────── */
+    .skeleton {
+      display: none;
+      margin-bottom: 24px;
+    }
+    .skeleton.visible { display: block; }
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-card) 50%, var(--bg-elevated) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .skeleton-line:nth-child(1) { width: 75%; }
+    .skeleton-line:nth-child(2) { width: 100%; }
+    .skeleton-line:nth-child(3) { width: 60%; }
+    .skeleton-line:nth-child(4) { width: 85%; }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Header ────────────────────────────────────────────────────── -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📄</div>
+        <h1>Academic OCR</h1>
+      </div>
+      <p>Upload a marksheet or certificate — get structured data back instantly.</p>
+    </header>
+
+    <!-- Error Banner ──────────────────────────────────────────────── -->
+    <div class="error-banner" id="error-banner">
+      <span class="error-banner-icon">⚠️</span>
+      <div class="error-banner-body">
+        <div class="error-banner-title" id="error-title">Error</div>
+        <div class="error-banner-msg" id="error-msg"></div>
+        <span class="error-banner-code" id="error-code" style="display:none;"></span>
+      </div>
+      <button class="error-banner-dismiss" id="error-dismiss" aria-label="Dismiss">✕</button>
+    </div>
+
+    <!-- Upload Card ───────────────────────────────────────────────── -->
+    <div class="card" id="upload-card">
+      <div class="card-title">Upload Document</div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="file-input" accept="image/*,.pdf" />
+        <div class="dropzone-icon">📤</div>
+        <div class="dropzone-text">
+          <strong>Click to browse</strong> or drag & drop<br />
+          <span class="dropzone-hint">Images (PNG, JPG, WEBP) or PDF — max 20 MB</span>
+        </div>
+      </div>
+
+      <!-- File info bar -->
+      <div class="file-info" id="file-info">
+        <span class="file-info-icon" id="file-icon">🖼️</span>
+        <div class="file-info-details">
+          <div class="file-info-name" id="file-name"></div>
+          <div class="file-info-size" id="file-size"></div>
+        </div>
+        <button class="file-info-remove" id="file-remove" aria-label="Remove file">✕</button>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-wrapper" id="preview-wrapper">
+        <img id="preview-img" alt="Document preview" />
+        <div class="preview-pdf-badge" id="preview-pdf">
+          <span class="pdf-icon">📑</span>
+          <span>PDF document selected</span>
+        </div>
+      </div>
+
+      <!-- Extract Button -->
+      <button class="btn-extract" id="btn-extract" disabled>
+        <span class="btn-content">
+          <div class="spinner"></div>
+          <span class="btn-label">⚡ Extract Data</span>
+          <span class="btn-loading-label">Processing…</span>
+        </span>
+      </button>
+      <div class="elapsed" id="elapsed"></div>
+    </div>
+
+    <!-- Loading Skeleton ──────────────────────────────────────────── -->
+    <div class="skeleton" id="skeleton">
+      <div class="card">
+        <div class="card-title">Extracting…</div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </div>
+    </div>
+
+    <!-- Result Section ────────────────────────────────────────────── -->
+    <div id="result-section">
+      <div class="card">
+        <div class="result-header">
+          <div class="card-title" style="margin-bottom:0;">Extraction Result</div>
+          <span class="badge" id="kind-badge"></span>
+        </div>
+
+        <div id="structured-data"></div>
+
+        <button class="raw-toggle" id="raw-toggle">
+          <span>{ }</span> <span id="raw-toggle-text">Show Raw JSON</span>
+        </button>
+        <div class="raw-json" id="raw-json">
+          <pre id="raw-json-pre"></pre>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Academic OCR v2.0 &mdash; powered by Google Gemini &middot;
+      <a href="http://127.0.0.1:8000/docs" target="_blank">API Docs ↗</a>
+    </footer>
+  </div>
+
+  <script>
+    /* ================================================================
+     *  Academic OCR — Frontend Logic
+     * ================================================================ */
+
+    const API_URL  = 'http://127.0.0.1:8000/extract';
+    const API_KEY  = 'mysecretkey123';
+    const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+
+    /* ── DOM refs ─────────────────────────────────────────────────── */
+    const $dropzone      = document.getElementById('dropzone');
+    const $fileInput     = document.getElementById('file-input');
+    const $fileInfo      = document.getElementById('file-info');
+    const $fileIcon      = document.getElementById('file-icon');
+    const $fileName      = document.getElementById('file-name');
+    const $fileSize      = document.getElementById('file-size');
+    const $fileRemove    = document.getElementById('file-remove');
+    const $previewWrap   = document.getElementById('preview-wrapper');
+    const $previewImg    = document.getElementById('preview-img');
+    const $previewPdf    = document.getElementById('preview-pdf');
+    const $btnExtract    = document.getElementById('btn-extract');
+    const $elapsed       = document.getElementById('elapsed');
+    const $skeleton      = document.getElementById('skeleton');
+    const $resultSection = document.getElementById('result-section');
+    const $kindBadge     = document.getElementById('kind-badge');
+    const $structuredData= document.getElementById('structured-data');
+    const $rawToggle     = document.getElementById('raw-toggle');
+    const $rawJson       = document.getElementById('raw-json');
+    const $rawJsonPre    = document.getElementById('raw-json-pre');
+    const $rawToggleText = document.getElementById('raw-toggle-text');
+    const $errorBanner   = document.getElementById('error-banner');
+    const $errorTitle    = document.getElementById('error-title');
+    const $errorMsg      = document.getElementById('error-msg');
+    const $errorCode     = document.getElementById('error-code');
+    const $errorDismiss  = document.getElementById('error-dismiss');
+
+    let selectedFile = null;
+    let elapsedTimer = null;
+
+    /* ── Helpers ───────────────────────────────────────────────────── */
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(2) + ' MB';
+    }
+
+    function isPdf(file) {
+      return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    }
+
+    function isImage(file) {
+      return file.type.startsWith('image/');
+    }
+
+    /* ── Error handling ───────────────────────────────────────────── */
+    function showError(title, message, code) {
+      $errorTitle.textContent = title;
+      $errorMsg.textContent = message;
+      if (code) {
+        $errorCode.textContent = code;
+        $errorCode.style.display = 'inline-block';
+      } else {
+        $errorCode.style.display = 'none';
+      }
+      $errorBanner.classList.add('visible');
+    }
+
+    function hideError() {
+      $errorBanner.classList.remove('visible');
+    }
+
+    $errorDismiss.addEventListener('click', hideError);
+
+    /* ── File Selection ───────────────────────────────────────────── */
+    function handleFile(file) {
+      hideError();
+
+      if (!file) return;
+
+      if (!isImage(file) && !isPdf(file)) {
+        showError('Invalid File Type', 'Please select an image (PNG, JPG, WEBP) or a PDF file.');
+        return;
+      }
+
+      if (file.size > MAX_SIZE) {
+        showError('File Too Large', `Maximum file size is 20 MB. Your file is ${formatBytes(file.size)}.`);
+        return;
+      }
+
+      selectedFile = file;
+
+      // File info bar
+      $fileName.textContent = file.name;
+      $fileSize.textContent = formatBytes(file.size);
+      $fileIcon.textContent = isPdf(file) ? '📑' : '🖼️';
+      $fileInfo.classList.add('visible');
+
+      // Preview
+      if (isImage(file)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          $previewImg.src = e.target.result;
+          $previewImg.style.display = 'block';
+          $previewPdf.style.display = 'none';
+          $previewWrap.classList.add('visible');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        $previewImg.style.display = 'none';
+        $previewPdf.style.display = 'flex';
+        $previewWrap.classList.add('visible');
+      }
+
+      // Enable extract
+      $btnExtract.disabled = false;
+
+      // Hide previous result
+      $resultSection.classList.remove('visible');
+      $resultSection.style.display = 'none';
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      $fileInput.value = '';
+      $fileInfo.classList.remove('visible');
+      $previewWrap.classList.remove('visible');
+      $btnExtract.disabled = true;
+      $elapsed.textContent = '';
+    }
+
+    $fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    $fileRemove.addEventListener('click', (e) => { e.stopPropagation(); clearFile(); });
+
+    /* ── Drag & Drop ──────────────────────────────────────────────── */
+    $dropzone.addEventListener('dragover', (e) => { e.preventDefault(); $dropzone.classList.add('drag-over'); });
+    $dropzone.addEventListener('dragleave', ()  => $dropzone.classList.remove('drag-over'));
+    $dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      $dropzone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    /* ── Elapsed Timer ────────────────────────────────────────────── */
+    function startTimer() {
+      const start = Date.now();
+      $elapsed.textContent = '0.0s';
+      elapsedTimer = setInterval(() => {
+        $elapsed.textContent = ((Date.now() - start) / 1000).toFixed(1) + 's';
+      }, 100);
+    }
+    function stopTimer() {
+      clearInterval(elapsedTimer);
+    }
+
+    /* ── Extract ──────────────────────────────────────────────────── */
+    $btnExtract.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      hideError();
+      $resultSection.classList.remove('visible');
+      $resultSection.style.display = 'none';
+      $btnExtract.classList.add('loading');
+      $btnExtract.disabled = true;
+      $skeleton.classList.add('visible');
+      startTimer();
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'X-API-Key': API_KEY },
+          body: formData,
+        });
+
+        stopTimer();
+
+        if (!res.ok) {
+          let errBody = {};
+          try { errBody = await res.json(); } catch {}
+
+          const status = res.status;
+          if (status === 401 || status === 403) {
+            showError('Authentication Failed', errBody.detail || 'Invalid or missing API key.', `HTTP ${status}`);
+          } else if (status === 422) {
+            showError('Validation Error', errBody.error || errBody.detail || 'The file could not be processed.', `HTTP ${status}`);
+          } else if (status === 429) {
+            showError('Rate Limited', errBody.detail || 'Too many requests — please try again shortly.', `HTTP ${status}`);
+          } else if (status >= 500) {
+            showError('Server Error', errBody.error || errBody.detail || 'An internal error occurred on the server.', `HTTP ${status} — ${errBody.code || 'UNKNOWN'}`);
+          } else {
+            showError('Request Failed', errBody.error || errBody.detail || 'Something went wrong.', `HTTP ${status}`);
+          }
+          return;
+        }
+
+        const data = await res.json();
+        renderResult(data);
+
+      } catch (err) {
+        stopTimer();
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+          showError('Network Error', 'Cannot reach the API server. Make sure it is running on http://127.0.0.1:8000.');
+        } else {
+          showError('Network Error', err.message || 'An unexpected error occurred.');
+        }
+      } finally {
+        $btnExtract.classList.remove('loading');
+        $btnExtract.disabled = false;
+        $skeleton.classList.remove('visible');
+      }
+    });
+
+    /* ── Render Result ────────────────────────────────────────────── */
+    function renderResult(data) {
+      // Kind badge
+      const kind = data.kind || 'unknown';
+      $kindBadge.textContent = kind.charAt(0).toUpperCase() + kind.slice(1);
+      $kindBadge.className = 'badge';
+      if (kind === 'marksheet') $kindBadge.classList.add('badge-marksheet');
+      else if (kind === 'certificate') $kindBadge.classList.add('badge-certificate');
+
+      // Build structured view
+      let html = '';
+
+      if (kind === 'marksheet') {
+        html += renderMarksheet(data);
+      } else if (kind === 'certificate') {
+        html += renderCertificate(data);
+      }
+
+      // Tags
+      if (data.tags && data.tags.length) {
+        html += '<div class="tags-row">';
+        data.tags.forEach(t => { html += `<span class="tag">${escHtml(t)}</span>`; });
+        html += '</div>';
+      }
+
+      $structuredData.innerHTML = html;
+
+      // Raw JSON
+      $rawJsonPre.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+      $rawJson.classList.remove('visible');
+      $rawToggleText.textContent = 'Show Raw JSON';
+
+      // Show
+      $resultSection.style.display = 'block';
+      requestAnimationFrame(() => $resultSection.classList.add('visible'));
+    }
+
+    function renderMarksheet(d) {
+      const ar = d.academicRecord || {};
+      let html = '<div class="data-grid">';
+
+      if (ar.gradingMode)  html += dataCell('Grading Mode', ar.gradingMode);
+      if (ar.percentage != null) html += dataCell('Percentage', ar.percentage + '%');
+      if (ar.sgpa != null) html += dataCell('SGPA', ar.sgpa);
+      if (ar.cgpa != null) html += dataCell('CGPA', ar.cgpa);
+
+      html += '</div>';
+
+      // Subjects table
+      const subs = ar.subjects || [];
+      if (subs.length) {
+        html += '<div class="subjects-section"><h3>Subjects</h3>';
+        html += '<table class="subjects-table"><thead><tr>';
+        html += '<th>Subject</th><th>Score</th><th>Max</th><th>Grade</th>';
+        html += '</tr></thead><tbody>';
+        subs.forEach(s => {
+          html += `<tr>
+            <td>${escHtml(s.subject || '—')}</td>
+            <td>${s.score != null ? s.score : '—'}</td>
+            <td>${s.maxScore != null ? s.maxScore : '—'}</td>
+            <td>${escHtml(s.grade || '—')}</td>
+          </tr>`;
+        });
+        html += '</tbody></table></div>';
+      }
+      return html;
+    }
+
+    function renderCertificate(d) {
+      let html = '<div class="data-grid">';
+      if (d.title)       html += dataCell('Title', d.title);
+      if (d.recipient)   html += dataCell('Recipient', d.recipient);
+      if (d.achievement) html += dataCell('Achievement', d.achievement);
+      if (d.date)        html += dataCell('Date', d.date);
+      html += '</div>';
+      return html;
+    }
+
+    function dataCell(label, value) {
+      return `<div class="data-cell">
+        <div class="data-cell-label">${escHtml(label)}</div>
+        <div class="data-cell-value">${escHtml(String(value))}</div>
+      </div>`;
+    }
+
+    /* ── Raw JSON Toggle ──────────────────────────────────────────── */
+    $rawToggle.addEventListener('click', () => {
+      const open = $rawJson.classList.toggle('visible');
+      $rawToggleText.textContent = open ? 'Hide Raw JSON' : 'Show Raw JSON';
+    });
+
+    /* ── Syntax Highlighting ──────────────────────────────────────── */
+    function syntaxHighlight(json) {
+      return json.replace(
+        /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        (match) => {
+          let cls = 'json-number';
+          if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? 'json-key' : 'json-string';
+          } else if (/true|false/.test(match)) {
+            cls = 'json-bool';
+          } else if (/null/.test(match)) {
+            cls = 'json-null';
+          }
+          return `<span class="${cls}">${match}</span>`;
+        }
+      );
+    }
+
+    function escHtml(s) {
+      const el = document.createElement('span');
+      el.textContent = s;
+      return el.innerHTML;
+    }
+  </script>
+</body>
+</html>

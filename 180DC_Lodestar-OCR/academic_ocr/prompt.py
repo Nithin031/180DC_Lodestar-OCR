@@ -56,6 +56,20 @@ FOR MARKSHEETS
     If each row has 3 numbers: first = maxScore, second = passing marks (SKIP), third = score
     If each row has 1 number: that is the score, get maxScore from header or total row
 
+  STRICT SCORE EXTRACTION:
+    - For subject scores, extract ONLY the final total marks obtained.
+      If the marksheet has multiple columns (theory, practical, internal,
+      external, total), ALWAYS pick the TOTAL or final column only.
+      Never extract theory or practical marks separately as the score.
+    - If any cell value is "XX", "X", "--", "-", "AB", "ABS", or any
+      non-numeric/non-letter marker, set that field to null.
+      Never calculate, infer, or derive scores from other columns.
+    - maxScore should only be extracted if it is explicitly printed on
+      the document. If it is marked as "XX", missing, or unclear, set
+      it to null. NEVER assume maxScore is 100.
+    - If a subject has null score AND null maxScore but has a valid
+      grade, still include the subject with null scores and the grade.
+
   Do NOT include total/summary rows as subjects.
 
 EXAMPLE MARKSHEET OUTPUT:
@@ -118,7 +132,14 @@ ABSOLUTE RULES
 2. NEVER return academicRecord as null if you can see subjects/scores
    in the document. Extract them.
 3. All scores must be strings: "85" not 85.
-4. Return null for missing/illegible fields. Never fabricate. If you see "XX", use null for scores and set gradingType to "grade_only".
+4. Return null for missing/illegible fields. Never fabricate.
+   If you see "XX", "X", "--", "-", "AB", "ABS", or any non-numeric
+   marker, set the field to null and set gradingType to "grade_only".
 5. Set confidence for every subject row.
 6. Title must be max 8 words — just the exam/course name.
+7. NEVER hallucinate or fill in values that are not clearly visible
+   and readable on the document. If uncertain, use null.
+8. ALWAYS extract the TOTAL/FINAL marks column, never theory or
+   practical sub-scores.
+9. NEVER assume maxScore is 100. Only extract it if explicitly shown.
 """

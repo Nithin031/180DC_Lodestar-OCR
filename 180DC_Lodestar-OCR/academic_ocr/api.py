@@ -24,7 +24,13 @@ import time
 import uuid
 
 from dotenv import load_dotenv
+
+# ── Bootstrap — must run before local imports so .env values are
+#    available to auth.py, ratelimit.py, etc. at import time.
+load_dotenv(r"D:\Club Projects\180 DC\180DC_Lodestar-OCR\180DC_Lodestar-OCR\.env", override=True)
+
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .auth import require_api_key
@@ -40,8 +46,38 @@ from .metrics import get_aggregates, record_metric
 from .job_queue import enqueue_job, get_job_status, start_worker
 from .ratelimit import check_rate_limit
 
-# ── Bootstrap ─────────────────────────────────────────────────────────
-load_dotenv()
+def to_public_schema(result: dict) -> dict:
+    if result.get("kind") == "marksheet":
+        academic = result.get("academicRecord", {}) or {}
+        return {
+            "kind": "marksheet",
+            "academicRecord": {
+                "gradingMode": academic.get("gradingMode"),
+                "percentage": academic.get("percentage"),
+                "sgpa": academic.get("sgpa"),
+                "cgpa": academic.get("cgpa"),
+                "subjects": [
+                    {
+                        "subject": s.get("subject"),
+                        "score": s.get("score"),
+                        "maxScore": s.get("maxScore"),
+                        "grade": s.get("grade"),
+                    }
+                    for s in academic.get("subjects", [])
+                ],
+            },
+            "tags": result.get("tags", []),
+        }
+    elif result.get("kind") == "certificate":
+        return {
+            "kind": "certificate",
+            "title": result.get("title"),
+            "recipient": result.get("recipient"),
+            "achievement": result.get("achievement"),
+            "date": result.get("date"),
+            "tags": result.get("tags", []),
+        }
+    return result
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +90,18 @@ logging.basicConfig(
 )
 
 # ── Create the extractor singleton ────────────────────────────────────
-_api_key = os.getenv("GEMINI_API_KEY")
+_api_key = os.getenv("GOOGLE_API_KEY", "").strip()
+logger.info(
+    "GOOGLE_API_KEY loaded: %s…%s (len=%d)",
+    _api_key[:8],
+    _api_key[-4:] if len(_api_key) > 12 else "??",
+    len(_api_key),
+)
 if not _api_key:
     logger.warning(
-        "GEMINI_API_KEY not set — the /extract endpoints will fail.  "
+        "GOOGLE_API_KEY not set — the /extract endpoints will fail.  "
         "Set it in .env or as an environment variable."
     )
-    _api_key = ""  # Allow app to start; will fail at extraction time.
 
 extractor = AcademicExtractor(api_key=_api_key) if _api_key else None  # type: ignore[arg-type]
 
@@ -72,6 +113,15 @@ app = FastAPI(
         "certificates using Google Gemini."
     ),
     version="2.0.0",
+)
+
+# ── CORS — allow the test frontend to reach the API ──────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -181,7 +231,7 @@ async def extract_sync(
             subject_count=subject_count,
         )
 
-        return result
+        return to_public_schema(result)
 
     finally:
         # ── Clean up temp file ────────────────────────────────────────
@@ -253,6 +303,13 @@ async def get_result(
     status = get_job_status(job_id)
     if status is None:
         raise HTTPException(404, detail=f"Job not found: {job_id}")
+    
+    if status.get("status") == "done":
+        # The prompt requested returning it as {"status": "done", "result": to_public_schema(...)}
+        return {
+            "status": "done",
+            "result": to_public_schema(status)
+        }
     return status
 
 

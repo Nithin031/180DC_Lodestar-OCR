@@ -15,6 +15,7 @@ Usage in FastAPI::
 """
 
 import logging
+import os
 from typing import Any, Dict
 
 from fastapi import Header, HTTPException
@@ -35,6 +36,12 @@ _KEY_STORE: Dict[str, Dict[str, Any]] = {
         "quota_limit": 30,
     },
 }
+
+# ── Load key from environment if set ──────────────────────────────────
+_env_key = os.getenv("API_KEY")
+if _env_key and _env_key not in _KEY_STORE:
+    _KEY_STORE[_env_key] = {"owner": "env-configured", "quota_limit": 60}
+    logger.info("Registered API key from API_KEY environment variable.")
 
 
 def register_key(
