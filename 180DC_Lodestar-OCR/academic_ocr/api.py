@@ -22,12 +22,15 @@ import os
 import tempfile
 import time
 import uuid
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 # ── Bootstrap — must run before local imports so .env values are
 #    available to auth.py, ratelimit.py, etc. at import time.
-load_dotenv(r"D:\Club Projects\180 DC\180DC_Lodestar-OCR\180DC_Lodestar-OCR\.env", override=True)
+#    Discovers .env relative to this file: academic_ocr/../.env
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(_PROJECT_ROOT / ".env", override=True)
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware

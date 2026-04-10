@@ -70,7 +70,7 @@ class AcademicExtractor:
         model:     Gemini model name.  Defaults to ``gemini-2.5-flash``.
     """
 
-    _DEFAULT_MODEL: str = "gemini-2.5-flash-lite"
+    _DEFAULT_MODEL: str = "gemini-2.5-flash"
 
     def __init__(
         self,

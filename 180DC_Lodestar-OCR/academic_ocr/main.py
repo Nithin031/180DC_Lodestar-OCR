@@ -56,12 +56,12 @@ def main() -> None:
     logger = logging.getLogger(__name__)
 
     # ── Validate environment ──────────────────────────────────────────
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
     if not api_key:
         logger.error(
-            "GEMINI_API_KEY not found.  "
-            "Create a .env file with GEMINI_API_KEY=<your-key> or "
+            "GOOGLE_API_KEY not found.  "
+            "Create a .env file with GOOGLE_API_KEY=<your-key> or "
             "set it as an environment variable."
         )
         sys.exit(1)
